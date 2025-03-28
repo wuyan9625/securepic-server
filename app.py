@@ -1,15 +1,38 @@
 from flask import Flask, request, render_template, redirect, url_for, send_from_directory
 import os
-from utils import generate_id
 import logging
+import requests
+from utils import generate_id
 
 # 設置日誌
 logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__)
+
+# 設置上傳文件夾
 UPLOAD_FOLDER = 'static/uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# LINE API 設置
+CHANNEL_ACCESS_TOKEN = 'YOUR_CHANNEL_ACCESS_TOKEN'  # 替換為您的 Channel Access Token
+GROUP_ID = 'YOUR_GROUP_ID'  # 替換為您的群組 ID
+
+# 發送訊息到 LINE 群組
+def send_line_message(message):
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {CHANNEL_ACCESS_TOKEN}"
+    }
+    data = {
+        "to": GROUP_ID,
+        "messages": [{
+            "type": "text",
+            "text": message
+        }]
+    }
+    response = requests.post("https://api.line.me/v2/bot/message/push", headers=headers, json=data)
+    return response.json()
 
 @app.route('/')
 def index():
@@ -20,13 +43,20 @@ def upload():
     if request.method == 'POST':
         file = request.files.get('file')
         if file:
+            # 生成唯一的文件 ID
             file_id = generate_id()
             filename = file_id + '.jpg'
             file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(file_path)
+
+            # 創建圖片查看鏈接
             view_url = f'/view?id={file_id}'
 
-            # 記錄上傳的圖片資訊
+            # 發送圖片查看鏈接到 LINE 群組
+            message = f"新圖片已上傳！查看圖片：{view_url}"
+            send_line_message(message)
+
+            # 記錄圖片上傳信息
             app.logger.debug(f"Received file: {filename}")
             app.logger.debug(f"File saved at: {file_path}")
             
