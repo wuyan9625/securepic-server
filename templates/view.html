@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>图片浏览</title>
+  <style>
+    img {
+      -webkit-user-drag: none;
+      -khtml-user-drag: none;
+      -moz-user-drag: none;
+      -o-user-drag: none;
+      user-drag: none;
+    }
+  </style>
+  <script>
+    document.addEventListener('contextmenu', e => e.preventDefault());
+  </script>
+</head>
+<body>
+  <h1>受保护图片</h1>
+  <img src="{{ url_for('uploaded_file', filename=filename) }}" alt="Protected">
+</body>
+</html>
